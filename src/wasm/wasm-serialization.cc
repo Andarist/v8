@@ -10,6 +10,7 @@
 #include "src/debug/debug.h"
 #include "src/runtime/runtime.h"
 #include "src/snapshot/snapshot-data.h"
+#include "src/trap-handler/trap-handler.h"
 #include "src/utils/ostreams.h"
 #include "src/utils/version.h"
 #include "src/wasm/code-space-access.h"
@@ -130,8 +131,8 @@ class Reader {
 };
 
 size_t MeasureHeader(const CompileTimeImports& compile_imports) {
-  return 5 * kUInt32Size +  // magic number, version hash, cpu features, flags
-                            // hash, enabled features
+  return 6 * kUInt32Size +  // magic number, version hash, cpu features, flags
+                            // hash, trap handler, enabled features
          sizeof(typename CompileTimeImportFlags::StorageType) +
          sizeof(uint32_t) +  // length of constants_module.
          compile_imports.constants_module().size();
@@ -144,6 +145,9 @@ void WriteHeader(Writer* writer, WasmEnabledFeatures enabled_features,
   writer->Write(Version::Hash());
   writer->Write(CpuFeatures::SupportedFeatures().ToIntegral());
   writer->Write(FlagList::Hash());
+  // Code compiled for the trap handler relies on it for bounds and null checks,
+  // and embedders enable the trap handler independently of the flags.
+  writer->Write(uint32_t{trap_handler::IsTrapHandlerEnabled()});
   writer->Write(enabled_features.ToIntegral());
   writer->Write(compile_imports.flags().ToIntegral());
   const std::string& constants_module = compile_imports.constants_module();
@@ -464,9 +468,6 @@ size_t NativeModuleSerializer::Measure() {
 
 void NativeModuleSerializer::WriteHeader(Writer* writer,
                                          size_t total_code_size) {
-  // TODO(eholk): We need to properly preserve the flag whether the trap
-  // handler was used or not when serializing.
-
   // Serialize the set of detected features; this contains
   // - all features detected during module decoding,
   // - all features detected during function body decoding, and
