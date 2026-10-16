@@ -24,6 +24,8 @@ function testLoopConditions() {
   for (; |C|baz(), |C|baz();) {}
   while ((|C|baz(), |C|baz()), |C|baz()) {}
   while (|C|baz(), (|C|baz(), |C|baz())) {}
+  while ((|C|baz(), |C|baz()), |C|baz(), |C|baz()) {}
+  while ((|C|baz(), |C|baz(), |C|baz()), |C|baz()) {}
 |R|}
 |R|
 
@@ -410,7 +412,7 @@ Called from testLoopConditions:
 Execution paused in testLoopConditions:
   while ((baz(), baz()), baz()) {}
   while (#baz(), (baz(), baz())) {}
-}
+  while ((baz(), baz()), baz(), baz()) {}
 
 Execution paused in baz:
 
@@ -420,7 +422,7 @@ const baz = () => #0;
 Called from testLoopConditions:
   while ((baz(), baz()), baz()) {}
   while (#baz(), (baz(), baz())) {}
-}
+  while ((baz(), baz()), baz(), baz()) {}
 
 Execution paused in baz:
 
@@ -430,12 +432,12 @@ const baz = () => 0#;
 Called from testLoopConditions:
   while ((baz(), baz()), baz()) {}
   while (#baz(), (baz(), baz())) {}
-}
+  while ((baz(), baz()), baz(), baz()) {}
 
 Execution paused in testLoopConditions:
   while ((baz(), baz()), baz()) {}
   while (baz(), (#baz(), baz())) {}
-}
+  while ((baz(), baz()), baz(), baz()) {}
 
 Execution paused in baz:
 
@@ -445,7 +447,7 @@ const baz = () => #0;
 Called from testLoopConditions:
   while ((baz(), baz()), baz()) {}
   while (baz(), (#baz(), baz())) {}
-}
+  while ((baz(), baz()), baz(), baz()) {}
 
 Execution paused in baz:
 
@@ -455,12 +457,12 @@ const baz = () => 0#;
 Called from testLoopConditions:
   while ((baz(), baz()), baz()) {}
   while (baz(), (#baz(), baz())) {}
-}
+  while ((baz(), baz()), baz(), baz()) {}
 
 Execution paused in testLoopConditions:
   while ((baz(), baz()), baz()) {}
   while (baz(), (baz(), #baz())) {}
-}
+  while ((baz(), baz()), baz(), baz()) {}
 
 Execution paused in baz:
 
@@ -470,7 +472,7 @@ const baz = () => #0;
 Called from testLoopConditions:
   while ((baz(), baz()), baz()) {}
   while (baz(), (baz(), #baz())) {}
-}
+  while ((baz(), baz()), baz(), baz()) {}
 
 Execution paused in baz:
 
@@ -480,10 +482,210 @@ const baz = () => 0#;
 Called from testLoopConditions:
   while ((baz(), baz()), baz()) {}
   while (baz(), (baz(), #baz())) {}
-}
+  while ((baz(), baz()), baz(), baz()) {}
 
 Execution paused in testLoopConditions:
   while (baz(), (baz(), baz())) {}
+  while ((#baz(), baz()), baz(), baz()) {}
+  while ((baz(), baz(), baz()), baz()) {}
+
+Execution paused in baz:
+
+const baz = () => #0;
+
+
+Called from testLoopConditions:
+  while (baz(), (baz(), baz())) {}
+  while ((#baz(), baz()), baz(), baz()) {}
+  while ((baz(), baz(), baz()), baz()) {}
+
+Execution paused in baz:
+
+const baz = () => 0#;
+
+
+Called from testLoopConditions:
+  while (baz(), (baz(), baz())) {}
+  while ((#baz(), baz()), baz(), baz()) {}
+  while ((baz(), baz(), baz()), baz()) {}
+
+Execution paused in testLoopConditions:
+  while (baz(), (baz(), baz())) {}
+  while ((baz(), #baz()), baz(), baz()) {}
+  while ((baz(), baz(), baz()), baz()) {}
+
+Execution paused in baz:
+
+const baz = () => #0;
+
+
+Called from testLoopConditions:
+  while (baz(), (baz(), baz())) {}
+  while ((baz(), #baz()), baz(), baz()) {}
+  while ((baz(), baz(), baz()), baz()) {}
+
+Execution paused in baz:
+
+const baz = () => 0#;
+
+
+Called from testLoopConditions:
+  while (baz(), (baz(), baz())) {}
+  while ((baz(), #baz()), baz(), baz()) {}
+  while ((baz(), baz(), baz()), baz()) {}
+
+Execution paused in testLoopConditions:
+  while (baz(), (baz(), baz())) {}
+  while ((baz(), baz()), #baz(), baz()) {}
+  while ((baz(), baz(), baz()), baz()) {}
+
+Execution paused in baz:
+
+const baz = () => #0;
+
+
+Called from testLoopConditions:
+  while (baz(), (baz(), baz())) {}
+  while ((baz(), baz()), #baz(), baz()) {}
+  while ((baz(), baz(), baz()), baz()) {}
+
+Execution paused in baz:
+
+const baz = () => 0#;
+
+
+Called from testLoopConditions:
+  while (baz(), (baz(), baz())) {}
+  while ((baz(), baz()), #baz(), baz()) {}
+  while ((baz(), baz(), baz()), baz()) {}
+
+Execution paused in testLoopConditions:
+  while (baz(), (baz(), baz())) {}
+  while ((baz(), baz()), baz(), #baz()) {}
+  while ((baz(), baz(), baz()), baz()) {}
+
+Execution paused in baz:
+
+const baz = () => #0;
+
+
+Called from testLoopConditions:
+  while (baz(), (baz(), baz())) {}
+  while ((baz(), baz()), baz(), #baz()) {}
+  while ((baz(), baz(), baz()), baz()) {}
+
+Execution paused in baz:
+
+const baz = () => 0#;
+
+
+Called from testLoopConditions:
+  while (baz(), (baz(), baz())) {}
+  while ((baz(), baz()), baz(), #baz()) {}
+  while ((baz(), baz(), baz()), baz()) {}
+
+Execution paused in testLoopConditions:
+  while ((baz(), baz()), baz(), baz()) {}
+  while ((#baz(), baz(), baz()), baz()) {}
+}
+
+Execution paused in baz:
+
+const baz = () => #0;
+
+
+Called from testLoopConditions:
+  while ((baz(), baz()), baz(), baz()) {}
+  while ((#baz(), baz(), baz()), baz()) {}
+}
+
+Execution paused in baz:
+
+const baz = () => 0#;
+
+
+Called from testLoopConditions:
+  while ((baz(), baz()), baz(), baz()) {}
+  while ((#baz(), baz(), baz()), baz()) {}
+}
+
+Execution paused in testLoopConditions:
+  while ((baz(), baz()), baz(), baz()) {}
+  while ((baz(), #baz(), baz()), baz()) {}
+}
+
+Execution paused in baz:
+
+const baz = () => #0;
+
+
+Called from testLoopConditions:
+  while ((baz(), baz()), baz(), baz()) {}
+  while ((baz(), #baz(), baz()), baz()) {}
+}
+
+Execution paused in baz:
+
+const baz = () => 0#;
+
+
+Called from testLoopConditions:
+  while ((baz(), baz()), baz(), baz()) {}
+  while ((baz(), #baz(), baz()), baz()) {}
+}
+
+Execution paused in testLoopConditions:
+  while ((baz(), baz()), baz(), baz()) {}
+  while ((baz(), baz(), #baz()), baz()) {}
+}
+
+Execution paused in baz:
+
+const baz = () => #0;
+
+
+Called from testLoopConditions:
+  while ((baz(), baz()), baz(), baz()) {}
+  while ((baz(), baz(), #baz()), baz()) {}
+}
+
+Execution paused in baz:
+
+const baz = () => 0#;
+
+
+Called from testLoopConditions:
+  while ((baz(), baz()), baz(), baz()) {}
+  while ((baz(), baz(), #baz()), baz()) {}
+}
+
+Execution paused in testLoopConditions:
+  while ((baz(), baz()), baz(), baz()) {}
+  while ((baz(), baz(), baz()), #baz()) {}
+}
+
+Execution paused in baz:
+
+const baz = () => #0;
+
+
+Called from testLoopConditions:
+  while ((baz(), baz()), baz(), baz()) {}
+  while ((baz(), baz(), baz()), #baz()) {}
+}
+
+Execution paused in baz:
+
+const baz = () => 0#;
+
+
+Called from testLoopConditions:
+  while ((baz(), baz()), baz(), baz()) {}
+  while ((baz(), baz(), baz()), #baz()) {}
+}
+
+Execution paused in testLoopConditions:
+  while ((baz(), baz(), baz()), baz()) {}
 #}
 
 

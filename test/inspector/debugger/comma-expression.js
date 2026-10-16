@@ -28,6 +28,8 @@ function testLoopConditions() {
   for (; baz(), baz();) {}
   while ((baz(), baz()), baz()) {}
   while (baz(), (baz(), baz())) {}
+  while ((baz(), baz()), baz(), baz()) {}
+  while ((baz(), baz(), baz()), baz()) {}
 }
 `;
 
