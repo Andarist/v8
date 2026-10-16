@@ -131,8 +131,8 @@ class Reader {
 };
 
 size_t MeasureHeader(const CompileTimeImports& compile_imports) {
-  return 6 * kUInt32Size +  // magic number, version hash, cpu features, flags
-                            // hash, trap handler, enabled features
+  return 5 * kUInt32Size +  // magic number, version hash, cpu features, flags
+                            // hash, enabled features
          sizeof(typename CompileTimeImportFlags::StorageType) +
          sizeof(uint32_t) +  // length of constants_module.
          compile_imports.constants_module().size();
@@ -146,9 +146,15 @@ void WriteHeader(Writer* writer, WasmEnabledFeatures enabled_features,
   writer->Write(CpuFeatures::SupportedFeatures().ToIntegral());
   writer->Write(FlagList::Hash());
   // Code compiled for the trap handler relies on it for bounds and null checks,
-  // and embedders enable the trap handler independently of the flags.
-  writer->Write(uint32_t{trap_handler::IsTrapHandlerEnabled()});
-  writer->Write(enabled_features.ToIntegral());
+  // and embedders enable the trap handler independently of the flags, so its
+  // state is stored in the most significant bit of the enabled features.
+  constexpr uint32_t kTrapHandlerBit = uint32_t{1} << 31;
+  static_assert(
+      (static_cast<uint32_t>(WasmEnabledFeatures::All().ToIntegral()) &
+       kTrapHandlerBit) == 0);
+  uint32_t features = static_cast<uint32_t>(enabled_features.ToIntegral());
+  if (trap_handler::IsTrapHandlerEnabled()) features |= kTrapHandlerBit;
+  writer->Write(features);
   writer->Write(compile_imports.flags().ToIntegral());
   const std::string& constants_module = compile_imports.constants_module();
   writer->Write(static_cast<uint32_t>(constants_module.size()));
