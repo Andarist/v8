@@ -19,6 +19,7 @@
 
 #include "src/objects/bigint.h"
 
+#include <algorithm>
 #include <atomic>
 
 #include "src/base/numbers/double.h"
@@ -34,6 +35,8 @@
 #include "src/objects/instance-type-inl.h"
 #include "src/objects/objects-inl.h"
 #include "src/objects/smi.h"
+#include "third_party/rapidhash-v8/rapidhash.h"
+#include "third_party/rapidhash-v8/secret.h"
 
 // Has to be the last include (doesn't have include guards):
 #include "src/objects/object-macros.h"
@@ -651,6 +654,34 @@ ComparisonResult BigInt::CompareToBigInt(DirectHandle<BigInt> x,
   if (result > 0) return AbsoluteGreater(x_sign);
   if (result < 0) return AbsoluteLess(x_sign);
   return ComparisonResult::kEqual;
+}
+
+uint32_t BigInt::HashMultiDigit(uint32_t meta) const {
+  uint32_t len = length();
+  DCHECK_GT(len, 1);
+  uint64_t hash = meta;
+  // Up to 16 bytes, mixing in one 64-bit word (two digits on 32-bit targets) at
+  // a time is cheaper than rapidhash.
+  constexpr uint32_t kMaxBytesForWordMixing = 16;
+  constexpr uint32_t kDigitsPerWord = sizeof(uint64_t) / kDigitSize;
+  if (len * kDigitSize <= kMaxBytesForWordMixing) {
+    for (uint32_t i = 0; i < len; i += kDigitsPerWord) {
+      uint64_t word = digit(i);
+      if constexpr (kDigitsPerWord == 2) {
+        if (i + 1 < len) word |= static_cast<uint64_t>(digit(i + 1)) << 32;
+      }
+      hash = base::hash64(hash ^ word);
+    }
+    return static_cast<uint32_t>(hash);
+  }
+  // Otherwise rapidhash (as in StringHasher) with the default secret, seeded
+  // with sign and length, over at most kMaxHashedBytes of the least
+  // significant digits, plus the top digit of longer values.
+  uint32_t hashed_digits = std::min(len, kMaxHashedBytes / kDigitSize);
+  hash = rapidhash(reinterpret_cast<const uint8_t*>(raw_digits()),
+                   hashed_digits * kDigitSize, meta, RAPIDHASH_DEFAULT_SECRET);
+  if (len > hashed_digits) hash = base::hash64(hash ^ digit(len - 1));
+  return static_cast<uint32_t>(hash);
 }
 
 bool BigInt::EqualToBigInt(Tagged<BigInt> x, Tagged<BigInt> y) {

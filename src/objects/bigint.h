@@ -231,9 +231,23 @@ V8_OBJECT class BigInt : public BigIntBase {
                                        DirectHandle<BigInt> x);
 
   bool ToBoolean() { return !is_zero(); }
-  uint32_t Hash() {
-    return base::hash32(length() | (sign() ? (1 << 30) : 0)) ^
-           static_cast<uint32_t>(base::hash64(is_zero() ? 0 : digit(0)));
+
+  // Hash() mixes in at most this many bytes of the least significant digits
+  // (so values of up to 8192 bits are hashed in full), plus the most
+  // significant digit. BigInts don't cache their hash, so this bounds the work
+  // per hash.
+  static constexpr uint32_t kMaxHashedBytes = 1 * KB;
+
+  // Value hash, consistent with EqualToBigInt. Values with more than one digit
+  // are hashed by HashMultiDigit.
+  uint32_t Hash() const {
+    uint32_t len = length();
+    uint32_t meta = base::hash32(len | (sign() ? (1 << 30) : 0));
+    if (V8_LIKELY(len <= 1)) {
+      return meta ^
+             static_cast<uint32_t>(base::hash64(len == 0 ? 0 : digit(0)));
+    }
+    return HashMultiDigit(meta);
   }
 
   bool IsNegative() const { return sign(); }
@@ -311,6 +325,9 @@ V8_OBJECT class BigInt : public BigIntBase {
   friend class StringToBigIntHelper;
   friend class ValueDeserializer;
   friend class ValueSerializer;
+
+  // Out-of-line part of Hash() for BigInts with more than one digit.
+  V8_EXPORT_PRIVATE uint32_t HashMultiDigit(uint32_t meta) const;
 
   // Special functions for StringToBigIntHelper:
   template <typename IsolateT>

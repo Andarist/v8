@@ -2,15 +2,19 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include "src/objects/bigint.h"
+
+#include <cinttypes>
 #include <cmath>
+#include <cstdio>
+#include <string>
+#include <vector>
 
 #include "src/execution/isolate.h"
 #include "src/heap/factory.h"
 #include "src/numbers/conversions.h"
-#include "src/objects/bigint.h"
 #include "src/objects/objects-inl.h"
 #include "test/unittests/test-utils.h"
-
 #include "testing/gtest/include/gtest/gtest.h"
 
 namespace v8 {
@@ -109,6 +113,77 @@ TEST_F(BigIntWithIsolate, CompareToDouble) {
   DirectHandle<BigInt> two_52 =
       BigIntLiteral(isolate(), "0x10000000000000").ToHandleChecked();
   Compare(two_52, 4503599627370496.0, ComparisonResult::kEqual);
+}
+
+namespace {
+
+DirectHandle<BigInt> HexBigInt(Isolate* isolate, const std::string& hex) {
+  return BigIntLiteral(isolate, hex.c_str()).ToHandleChecked();
+}
+
+// Builds {words} 64-bit words, with {top} in the most significant one,
+// {varying} in the one at index {varying_word} (counting from the least
+// significant word) and {low} in the least significant one.
+std::string HexWords(int words, uint64_t top, int varying_word,
+                     uint64_t varying, uint64_t low) {
+  std::string hex = "0x";
+  for (int word = words - 1; word >= 0; word--) {
+    uint64_t value = word == words - 1 ? top : 0;
+    if (word == varying_word) value |= varying;
+    if (word == 0) value |= low;
+    char buffer[17];
+    snprintf(buffer, sizeof(buffer), "%016" PRIx64, value);
+    hex += buffer;
+  }
+  return hex;
+}
+
+// Keys whose lowest 64 bits take only 16 different values, like fields packed
+// into a wide integer, must still spread over the buckets.
+void CheckHashSpreadsKeys(Isolate* isolate, int words, uint64_t top,
+                          int varying_word, int varying_shift = 0) {
+  constexpr int kSamples = 1 << 12;
+  constexpr int kBuckets = 1 << 8;
+  std::vector<int> buckets(kBuckets, 0);
+  for (int i = 0; i < kSamples; i++) {
+    HandleScope scope(isolate);
+    std::string hex =
+        HexWords(words, top, varying_word,
+                 static_cast<uint64_t>(i + 1) << varying_shift, i & 15);
+    buckets[HexBigInt(isolate, hex)->Hash() % kBuckets]++;
+  }
+  double mean = static_cast<double>(kSamples) / kBuckets;
+  double sum_of_squares = 0;
+  for (int count : buckets) {
+    sum_of_squares += (count - mean) * (count - mean);
+  }
+  double variation_coefficient = std::sqrt(sum_of_squares / kBuckets) / mean;
+  CHECK_LT(variation_coefficient, 0.4);
+}
+
+}  // namespace
+
+TEST_F(BigIntWithIsolate, HashUsesDigitsAboveTheLowest) {
+  constexpr uint64_t kTopBit = uint64_t{1} << 63;
+  // Two-word keys varying in the upper word: two or four digits.
+  CheckHashSpreadsKeys(isolate(), 2, kTopBit, 1);
+  // Like above, but only three digits on 32-bit targets.
+  CheckHashSpreadsKeys(isolate(), 2, 0, 1);
+  // Varying only in the upper half of a word: the fourth digit on 32-bit
+  // targets.
+  CheckHashSpreadsKeys(isolate(), 2, 0, 1, 32);
+  // 64-word keys (hashed with rapidhash) varying in a middle word.
+  CheckHashSpreadsKeys(isolate(), 64, kTopBit, 40);
+}
+
+TEST_F(BigIntWithIsolate, HashOfLongBigIntsUsesTheMostSignificantDigit) {
+  // Values twice as long as the bytes that are hashed in full, which differ
+  // only in their most significant digit.
+  constexpr size_t kHexCharsPerByte = 2;
+  std::string middle(2 * BigInt::kMaxHashedBytes * kHexCharsPerByte, '0');
+  DirectHandle<BigInt> one = HexBigInt(isolate(), "0x1" + middle + "1");
+  DirectHandle<BigInt> two = HexBigInt(isolate(), "0x2" + middle + "1");
+  CHECK_NE(one->Hash(), two->Hash());
 }
 
 }  // namespace internal
