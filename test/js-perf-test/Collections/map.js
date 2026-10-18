@@ -31,6 +31,32 @@ var MapDoubleBenchmark = new BenchmarkSuite('Map-Double', [1000], [
   new Benchmark('Delete', false, false, 0, MapDeleteDouble, MapSetupDouble, MapTearDown),
 ]);
 
+var MapBigIntBenchmark = new BenchmarkSuite('Map-BigInt', [1000], [
+  new Benchmark('Set', false, false, 0, MapSetBigInt, MapSetupBigIntBase, MapTearDown),
+  new Benchmark('Has', false, false, 0, MapHasBigInt, MapSetupBigInt, MapTearDown),
+  new Benchmark('Get', false, false, 0, MapGetBigInt, MapSetupBigInt, MapTearDown),
+  new Benchmark('Delete', false, false, 0, MapDeleteBigInt, MapSetupBigInt, MapTearDown),
+]);
+
+var MapWideBigIntBenchmark = new BenchmarkSuite('Map-BigInt-Wide', [1000], [
+  new Benchmark('Set', false, false, 0, MapSetWideBigInt, MapSetupWideBigIntBase, MapTearDown),
+  new Benchmark('Has', false, false, 0, MapHasWideBigInt, MapSetupWideBigInt, MapTearDown),
+  new Benchmark('Get', false, false, 0, MapGetWideBigInt, MapSetupWideBigInt, MapTearDown),
+  new Benchmark('Delete', false, false, 0, MapDeleteWideBigInt, MapSetupWideBigInt, MapTearDown),
+]);
+
+var MapHugeBigIntBenchmark = new BenchmarkSuite('Map-BigInt-Huge', [1000], [
+  new Benchmark('Set', false, false, 0, MapSetHugeBigInt, MapSetupHugeBigIntBase, MapTearDown),
+  new Benchmark('Has', false, false, 0, MapHasHugeBigInt, MapSetupHugeBigInt, MapTearDown),
+  new Benchmark('Get', false, false, 0, MapGetHugeBigInt, MapSetupHugeBigInt, MapTearDown),
+  new Benchmark('Delete', false, false, 0, MapDeleteHugeBigInt, MapSetupHugeBigInt, MapTearDown),
+]);
+
+var MapPackedBigIntLargeBenchmark = new BenchmarkSuite('Map-BigInt-Packed-Set-Get-Large', [1e7], [
+  new Benchmark('Set-Get', false, false, 0, MapSetGetPackedBigIntLarge,
+                MapSetupPackedBigIntBaseLarge, MapTearDown),
+]);
+
 var MapObjectLargeBenchmark = new BenchmarkSuite('Map-Object-Set-Get-Large', [1e7], [
   new Benchmark('Set-Get', false, false, 0, MapSetGetObjectLarge,
                 MapSetupObjectBaseLarge, MapTearDown),
@@ -96,6 +122,45 @@ function MapSetupDoubleBase() {
 function MapSetupDouble() {
   MapSetupDoubleBase();
   MapSetDouble();
+}
+
+function MapSetupBigIntBase() {
+  SetupBigIntKeys();
+  map = new Map;
+}
+
+function MapSetupBigInt() {
+  MapSetupBigIntBase();
+  MapSetBigInt();
+}
+
+function MapSetupWideBigIntBase() {
+  SetupWideBigIntKeys();
+  map = new Map;
+}
+
+function MapSetupWideBigInt() {
+  MapSetupWideBigIntBase();
+  MapSetWideBigInt();
+}
+
+function MapSetupHugeBigIntBase() {
+  SetupHugeBigIntKeys();
+  map = new Map;
+}
+
+function MapSetupHugeBigInt() {
+  MapSetupHugeBigIntBase();
+  MapSetHugeBigInt();
+}
+
+// Fewer keys than the other large suites, which bounds the run time when
+// these keys' hashes collide.
+var PackedBigIntLargeN = LargeN / 4;
+
+function MapSetupPackedBigIntBaseLarge() {
+  SetupPackedBigIntKeys(2 * PackedBigIntLargeN);
+  map = new Map;
 }
 
 function MapTearDown() {
@@ -296,6 +361,142 @@ function MapDeleteDouble() {
   // more than once. Therefore, we do not the return value of delete.
   for (var i = 0; i < N; i++) {
     map.delete(keys[i]);
+  }
+}
+
+function MapSetBigInt() {
+  for (var i = 0; i < N; i++) {
+    map.set(keys[i], i);
+  }
+}
+
+function MapHasBigInt() {
+  for (var i = 0; i < N; i++) {
+    if (!map.has(keys[i])) {
+      throw new Error();
+    }
+  }
+  for (var i = N; i < 2 * N; i++) {
+    if (map.has(keys[i])) {
+      throw new Error();
+    }
+  }
+}
+
+function MapGetBigInt() {
+  for (var i = 0; i < N; i++) {
+    if (map.get(keys[i]) !== i) {
+      throw new Error();
+    }
+  }
+  for (var i = N; i < 2 * N; i++) {
+    if (map.get(keys[i]) !== undefined) {
+      throw new Error();
+    }
+  }
+}
+
+function MapDeleteBigInt() {
+  // This is run more than once per setup, so items get deleted more than
+  // once. Therefore, we do not check the return value of delete.
+  for (var i = 0; i < N; i++) {
+    map.delete(keys[i]);
+  }
+}
+
+function MapSetWideBigInt() {
+  for (var i = 0; i < N; i++) {
+    map.set(keys[i], i);
+  }
+}
+
+function MapHasWideBigInt() {
+  for (var i = 0; i < N; i++) {
+    if (!map.has(keys[i])) {
+      throw new Error();
+    }
+  }
+  for (var i = N; i < 2 * N; i++) {
+    if (map.has(keys[i])) {
+      throw new Error();
+    }
+  }
+}
+
+function MapGetWideBigInt() {
+  for (var i = 0; i < N; i++) {
+    if (map.get(keys[i]) !== i) {
+      throw new Error();
+    }
+  }
+  for (var i = N; i < 2 * N; i++) {
+    if (map.get(keys[i]) !== undefined) {
+      throw new Error();
+    }
+  }
+}
+
+function MapDeleteWideBigInt() {
+  // This is run more than once per setup, so items get deleted more than
+  // once. Therefore, we do not check the return value of delete.
+  for (var i = 0; i < N; i++) {
+    map.delete(keys[i]);
+  }
+}
+
+function MapSetHugeBigInt() {
+  for (var i = 0; i < N; i++) {
+    map.set(keys[i], i);
+  }
+}
+
+function MapHasHugeBigInt() {
+  for (var i = 0; i < N; i++) {
+    if (!map.has(keys[i])) {
+      throw new Error();
+    }
+  }
+  for (var i = N; i < 2 * N; i++) {
+    if (map.has(keys[i])) {
+      throw new Error();
+    }
+  }
+}
+
+function MapGetHugeBigInt() {
+  for (var i = 0; i < N; i++) {
+    if (map.get(keys[i]) !== i) {
+      throw new Error();
+    }
+  }
+  for (var i = N; i < 2 * N; i++) {
+    if (map.get(keys[i]) !== undefined) {
+      throw new Error();
+    }
+  }
+}
+
+function MapDeleteHugeBigInt() {
+  // This is run more than once per setup, so items get deleted more than
+  // once. Therefore, we do not check the return value of delete.
+  for (var i = 0; i < N; i++) {
+    map.delete(keys[i]);
+  }
+}
+
+function MapSetGetPackedBigIntLarge() {
+  for (var i = 0; i < PackedBigIntLargeN; i++) {
+    map.set(keys[i * 2], i);
+  }
+  for (var i = 0; i < PackedBigIntLargeN; i++) {
+    if (map.get(keys[i * 2]) !== i) {
+      throw new Error();
+    }
+  }
+  for (var i = 0; i < PackedBigIntLargeN; i++) {
+    if (map.get(keys[i * 2 + 1]) !== undefined) {
+      throw new Error();
+    }
   }
 }
 
